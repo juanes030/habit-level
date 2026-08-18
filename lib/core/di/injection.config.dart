@@ -31,20 +31,34 @@ import 'package:habit_level/features/auth/domain/usecases/sign_up.dart'
     as _i427;
 import 'package:habit_level/features/auth/presentation/bloc/auth/auth_bloc.dart'
     as _i710;
+import 'package:habit_level/features/habits/data/datasources/habit_completion_remote_data_source.dart'
+    as _i949;
+import 'package:habit_level/features/habits/data/datasources/habit_completion_remote_data_source_impl.dart'
+    as _i877;
 import 'package:habit_level/features/habits/data/datasources/habit_remote_data_source.dart'
     as _i573;
 import 'package:habit_level/features/habits/data/datasources/habit_remote_data_source_impl.dart'
     as _i190;
+import 'package:habit_level/features/habits/data/repositories/habit_completion_repository_impl.dart'
+    as _i422;
 import 'package:habit_level/features/habits/data/repositories/habit_repository_impl.dart'
     as _i567;
+import 'package:habit_level/features/habits/domain/repositories/habit_completion_repository.dart'
+    as _i530;
 import 'package:habit_level/features/habits/domain/repositories/habit_repository.dart'
     as _i732;
 import 'package:habit_level/features/habits/domain/usecases/create_habit.dart'
     as _i920;
+import 'package:habit_level/features/habits/domain/usecases/create_habit_completion.dart'
+    as _i1009;
+import 'package:habit_level/features/habits/domain/usecases/get_habit_completions.dart'
+    as _i846;
 import 'package:habit_level/features/habits/domain/usecases/get_habits.dart'
     as _i16;
 import 'package:habit_level/features/habits/presentation/bloc/habit/habit_bloc.dart'
     as _i340;
+import 'package:habit_level/features/habits/presentation/bloc/habit_completion/habit_completion_bloc.dart'
+    as _i100;
 import 'package:injectable/injectable.dart' as _i526;
 
 extension GetItInjectableX on _i174.GetIt {
@@ -57,11 +71,21 @@ extension GetItInjectableX on _i174.GetIt {
     final firebaseModule = _$FirebaseModule();
     gh.lazySingleton<_i59.FirebaseAuth>(() => firebaseModule.firebaseAuth);
     gh.lazySingleton<_i974.FirebaseFirestore>(() => firebaseModule.firestore);
+    gh.lazySingleton<_i949.HabitCompletionRemoteDataSource>(
+      () => _i877.HabitCompletionRemoteDataSourceImpl(
+        gh<_i974.FirebaseFirestore>(),
+      ),
+    );
     gh.lazySingleton<_i573.HabitRemoteDataSource>(
       () => _i190.HabitRemoteDataSourceImpl(gh<_i974.FirebaseFirestore>()),
     );
     gh.lazySingleton<_i376.AuthRemoteDataSource>(
       () => _i376.AuthRemoteDataSourceImpl(gh<_i59.FirebaseAuth>()),
+    );
+    gh.lazySingleton<_i530.HabitCompletionRepository>(
+      () => _i422.HabitCompletionRepositoryImpl(
+        gh<_i949.HabitCompletionRemoteDataSource>(),
+      ),
     );
     gh.lazySingleton<_i732.HabitRepository>(
       () => _i567.HabitRepositoryImpl(gh<_i573.HabitRemoteDataSource>()),
@@ -84,6 +108,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i151.SignIn>(() => _i151.SignIn(gh<_i189.AuthRepository>()));
     gh.factory<_i417.SignOut>(() => _i417.SignOut(gh<_i189.AuthRepository>()));
     gh.factory<_i427.SignUp>(() => _i427.SignUp(gh<_i189.AuthRepository>()));
+    gh.factory<_i1009.CreateHabitCompletion>(
+      () => _i1009.CreateHabitCompletion(gh<_i530.HabitCompletionRepository>()),
+    );
+    gh.factory<_i846.GetHabitCompletions>(
+      () => _i846.GetHabitCompletions(gh<_i530.HabitCompletionRepository>()),
+    );
     gh.lazySingleton<_i710.AuthBloc>(
       () => _i710.AuthBloc(
         gh<_i614.GetAuthState>(),
@@ -95,6 +125,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i340.HabitBloc>(
       () => _i340.HabitBloc(gh<_i16.GetHabits>(), gh<_i920.CreateHabit>()),
+    );
+    gh.factory<_i100.HabitCompletionBloc>(
+      () => _i100.HabitCompletionBloc(
+        gh<_i1009.CreateHabitCompletion>(),
+        gh<_i846.GetHabitCompletions>(),
+      ),
     );
     return this;
   }
