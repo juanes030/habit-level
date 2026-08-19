@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:habit_level/core/di/injection.dart';
 import 'package:habit_level/features/auth/presentation/bloc/auth/auth_bloc.dart';
+import 'package:habit_level/features/habits/domain/entities/habit_completion.dart';
 import 'package:habit_level/features/habits/presentation/bloc/habit/habit_bloc.dart';
 import 'package:habit_level/features/habits/presentation/bloc/habit_completion/habit_completion_bloc.dart';
 import 'package:habit_level/features/habits/presentation/pages/create_habit_form.dart';
@@ -24,7 +25,11 @@ class HomePage extends StatelessWidget {
           create: (_) =>
               getIt<HabitBloc>()..add(HabitLoadRequested(authState.user.id)),
         ),
-        BlocProvider(create: (_) => getIt<HabitCompletionBloc>()),
+        BlocProvider(
+          create: (_) =>
+              getIt<HabitCompletionBloc>()
+                ..add(TodayHabitCompletionsLoadRequested(authState.user.id)),
+        ),
       ],
       child: Scaffold(
         appBar: AppBar(
@@ -52,45 +57,55 @@ class HomePage extends StatelessWidget {
               ).showSnackBar(SnackBar(content: Text(completionState.message)));
             }
           },
-          child: BlocBuilder<HabitBloc, HabitState>(
-            builder: (context, state) {
-              if (state is HabitLoading) {
-                return const Center(child: CircularProgressIndicator());
-              }
+          child: BlocBuilder<HabitCompletionBloc, HabitCompletionState>(
+            builder: (context, completionState) {
+            final List<HabitCompletion> completions =
+                  completionState is TodayHabitCompletionsLoaded
+                  ? completionState.completions
+                  : <HabitCompletion>[];
 
-              if (state is HabitError) {
-                return Center(child: Text(state.message));
-              }
+              return BlocBuilder<HabitBloc, HabitState>(
+                builder: (context, state) {
+                  if (state is HabitLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-              if (state is HabitLoaded) {
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Mis hábitos',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  if (state is HabitError) {
+                    return Center(child: Text(state.message));
+                  }
+
+                  if (state is HabitLoaded) {
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Mis hábitos',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          HabitList(
+                            habits: state.habits,
+                            ownerId: authState.user.id,
+                            completions: completions,
+                          ),
+
+                          const Divider(height: 32),
+
+                          CreateHabitForm(ownerId: authState.user.id),
+                        ],
                       ),
-                      const SizedBox(height: 16),
+                    );
+                  }
 
-                      HabitList(
-                        habits: state.habits,
-                        ownerId: authState.user.id,
-                      ),
-
-                      const Divider(height: 32),
-
-                      CreateHabitForm(ownerId: authState.user.id),
-                    ],
-                  ),
-                );
-              }
-
-              return const SizedBox.shrink();
+                  return const SizedBox.shrink();
+                },
+              );
             },
           ),
         ),

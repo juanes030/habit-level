@@ -8,8 +8,14 @@ import '../../domain/entities/habit.dart';
 class HabitList extends StatelessWidget {
   final List<Habit> habits;
   final String ownerId;
+  final List<HabitCompletion> completions;
 
-  const HabitList({super.key, required this.habits, required this.ownerId});
+  const HabitList({
+    super.key,
+    required this.habits,
+    required this.ownerId,
+    required this.completions,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -24,27 +30,38 @@ class HabitList extends StatelessWidget {
       itemBuilder: (context, index) {
         final habit = habits[index];
 
-      return ListTile(
-      title: Text(habit.title),
+        final isCompleted = completions.any(
+          (completion) => completion.habitId == habit.id,
+        );
+
+        return ListTile(
+          title: Text(habit.title),
           subtitle: Text(habit.description),
           trailing: IconButton(
-            icon: const Icon(Icons.check_circle_outline),
-            onPressed: () {
-              final now = DateTime.now();
+            icon: Icon(
+              isCompleted ? Icons.check_circle : Icons.check_circle_outline,
+            ),
+            onPressed: isCompleted
+                ? null
+                : () {
+                    final now = DateTime.now();
 
-              final completion = HabitCompletion(
-                id: '',
-                habitId: habit.id,
-                ownerId: ownerId,
-                date: DateTime(now.year, now.month, now.day),
-                completedAt: now,
-                value: habit.target,
-              );
+                    final completion = HabitCompletion(
+                      id: '',
+                      habitId: habit.id,
+                      ownerId: ownerId,
+                      date: DateTime(now.year, now.month, now.day),
+                      completedAt: now,
+                      value: habit.target,
+                    );
 
-              context.read<HabitCompletionBloc>().add(
-                HabitCompletionCreateRequested(completion),
-              );
-            },
+                    context.read<HabitCompletionBloc>().add(
+                      HabitCompletionCreateRequested(
+                        completion: completion,
+                        frequency: habit.frequency,
+                      ),
+                    );
+                  },
           ),
         );
       },

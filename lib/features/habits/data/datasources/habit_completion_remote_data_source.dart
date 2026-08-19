@@ -9,4 +9,11 @@ abstract class HabitCompletionRemoteDataSource {
     String habitId,
     String ownerId,
   );
+
+  Future<HabitCompletionModel?> getCompletionForDate(
+    String habitId,
+    String ownerId,
+    DateTime date,
+  );
+  Future<List<HabitCompletionModel>> getTodayCompletions(String ownerId);
 }

@@ -55,6 +55,8 @@ import 'package:habit_level/features/habits/domain/usecases/get_habit_completion
     as _i846;
 import 'package:habit_level/features/habits/domain/usecases/get_habits.dart'
     as _i16;
+import 'package:habit_level/features/habits/domain/usecases/get_today_habit_completions.dart'
+    as _i3;
 import 'package:habit_level/features/habits/presentation/bloc/habit/habit_bloc.dart'
     as _i340;
 import 'package:habit_level/features/habits/presentation/bloc/habit_completion/habit_completion_bloc.dart'
@@ -114,6 +116,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i846.GetHabitCompletions>(
       () => _i846.GetHabitCompletions(gh<_i530.HabitCompletionRepository>()),
     );
+    gh.factory<_i3.GetTodayHabitCompletions>(
+      () => _i3.GetTodayHabitCompletions(gh<_i530.HabitCompletionRepository>()),
+    );
     gh.lazySingleton<_i710.AuthBloc>(
       () => _i710.AuthBloc(
         gh<_i614.GetAuthState>(),
@@ -130,6 +135,7 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i100.HabitCompletionBloc(
         gh<_i1009.CreateHabitCompletion>(),
         gh<_i846.GetHabitCompletions>(),
+        gh<_i3.GetTodayHabitCompletions>(),
       ),
     );
     return this;

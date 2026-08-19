@@ -40,4 +40,38 @@ class HabitCompletionRemoteDataSourceImpl
 
     return snapshot.docs.map(HabitCompletionModel.fromFirestore).toList();
   }
+
+  @override
+  Future<HabitCompletionModel?> getCompletionForDate(
+    String habitId,
+    String ownerId,
+    DateTime date,
+  ) async {
+    final snapshot = await _completionsCollection
+        .where('habitId', isEqualTo: habitId)
+        .where('ownerId', isEqualTo: ownerId)
+        .where('date', isEqualTo: Timestamp.fromDate(date))
+        .limit(1)
+        .get();
+
+    if (snapshot.docs.isEmpty) {
+      return null;
+    }
+
+    return HabitCompletionModel.fromFirestore(snapshot.docs.first);
+  }
+
+  @override
+  Future<List<HabitCompletionModel>> getTodayCompletions(String ownerId) async {
+    final now = DateTime.now();
+
+    final today = DateTime(now.year, now.month, now.day);
+
+    final snapshot = await _completionsCollection
+        .where('ownerId', isEqualTo: ownerId)
+        .where('date', isEqualTo: Timestamp.fromDate(today))
+        .get();
+
+    return snapshot.docs.map(HabitCompletionModel.fromFirestore).toList();
+  }
 }

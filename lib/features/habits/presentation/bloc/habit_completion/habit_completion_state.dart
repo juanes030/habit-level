@@ -24,6 +24,15 @@ class HabitCompletionLoaded extends HabitCompletionState {
   List<Object> get props => [completions];
 }
 
+class TodayHabitCompletionsLoaded extends HabitCompletionState {
+  final List<HabitCompletion> completions;
+
+  const TodayHabitCompletionsLoaded(this.completions);
+
+  @override
+  List<Object> get props => [completions];
+}
+
 class HabitCompletionCreated extends HabitCompletionState {
   final HabitCompletion completion;
 

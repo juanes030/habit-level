@@ -9,11 +9,15 @@ sealed class HabitCompletionEvent extends Equatable {
 
 class HabitCompletionCreateRequested extends HabitCompletionEvent {
   final HabitCompletion completion;
+  final String frequency;
 
-  const HabitCompletionCreateRequested(this.completion);
+  const HabitCompletionCreateRequested({
+    required this.completion,
+    required this.frequency,
+  });
 
   @override
-  List<Object> get props => [completion];
+  List<Object> get props => [completion, frequency];
 }
 
 class HabitCompletionsLoadRequested extends HabitCompletionEvent {
@@ -27,4 +31,13 @@ class HabitCompletionsLoadRequested extends HabitCompletionEvent {
 
   @override
   List<Object> get props => [habitId, ownerId];
+}
+
+class TodayHabitCompletionsLoadRequested extends HabitCompletionEvent {
+  final String ownerId;
+
+  const TodayHabitCompletionsLoadRequested(this.ownerId);
+
+  @override
+  List<Object> get props => [ownerId];
 }

@@ -29,4 +29,18 @@ class HabitCompletionRepositoryImpl implements HabitCompletionRepository {
   Future<List<HabitCompletion>> getCompletions(String habitId, String ownerId) {
     return remoteDataSource.getCompletions(habitId, ownerId);
   }
+
+  @override
+  Future<HabitCompletion?> getCompletionForDate(
+    String habitId,
+    String ownerId,
+    DateTime date,
+  ) {
+    return remoteDataSource.getCompletionForDate(habitId, ownerId, date);
+  }
+
+  @override
+  Future<List<HabitCompletion>> getTodayCompletions(String ownerId) {
+    return remoteDataSource.getTodayCompletions(ownerId);
+  }
 }
