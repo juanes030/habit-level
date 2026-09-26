@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:habit_level/features/habits/domain/entities/habit.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../domain/entities/habit_completion.dart';
@@ -38,17 +39,15 @@ class HabitCompletionBloc
   ) async {
     emit(const HabitCompletionLoading());
 
-  try {
+    try {
       final completion = await _createHabitCompletion(
-        event.completion,
-        frequency: event.frequency,
+        event.habit,
+        ownerId: event.ownerId,
       );
 
       emit(HabitCompletionCreated(completion));
 
-      final completions = await _getTodayHabitCompletions(
-        event.completion.ownerId,
-      );
+      final completions = await _getTodayHabitCompletions(event.ownerId);
 
       emit(TodayHabitCompletionsLoaded(completions));
     } on HabitAlreadyCompletedException {

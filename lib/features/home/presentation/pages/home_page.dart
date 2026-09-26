@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:habit_level/app/theme/app_spacing.dart';
 import 'package:habit_level/core/di/injection.dart';
 import 'package:habit_level/features/auth/presentation/bloc/auth/auth_bloc.dart';
 import 'package:habit_level/features/habits/domain/entities/habit_completion.dart';
 import 'package:habit_level/features/habits/presentation/bloc/habit/habit_bloc.dart';
 import 'package:habit_level/features/habits/presentation/bloc/habit_completion/habit_completion_bloc.dart';
-import 'package:habit_level/features/habits/presentation/pages/create_habit_form.dart';
 import 'package:habit_level/features/habits/presentation/widgets/habit_list.dart';
+import 'package:habit_level/features/home/presentation/widgets/home_states.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -33,15 +35,42 @@ class HomePage extends StatelessWidget {
       ],
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Home Page'),
+          title: const Text('HabitLevel'),
           actions: [
-            IconButton(
-              onPressed: () {
-                context.read<AuthBloc>().add(const AuthSignOutRequested());
+            PopupMenuButton<String>(
+              tooltip: 'Opciones',
+              onSelected: (value) {
+                if (value == 'logout') {
+                  context.read<AuthBloc>().add(const AuthSignOutRequested());
+                }
               },
-              icon: const Icon(Icons.logout),
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'logout',
+                  child: Row(
+                    children: [
+                      Icon(Icons.logout),
+                      SizedBox(width: AppSpacing.sm),
+                      Text('Cerrar sesión'),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ],
+        ),
+        floatingActionButton: BlocBuilder<HabitBloc, HabitState>(
+          builder: (context, state) {
+            if (state is! HabitLoaded || state.habits.isEmpty) {
+              return const SizedBox.shrink();
+            }
+
+            return FloatingActionButton.extended(
+              onPressed: () => _openCreateHabit(context, authState.user.id),
+              icon: const Icon(Icons.add),
+              label: const Text('Crear hábito'),
+            );
+          },
         ),
         body: BlocListener<HabitCompletionBloc, HabitCompletionState>(
           listener: (context, completionState) {
@@ -57,59 +86,114 @@ class HomePage extends StatelessWidget {
               ).showSnackBar(SnackBar(content: Text(completionState.message)));
             }
           },
-          child: BlocBuilder<HabitCompletionBloc, HabitCompletionState>(
-            builder: (context, completionState) {
-            final List<HabitCompletion> completions =
-                  completionState is TodayHabitCompletionsLoaded
-                  ? completionState.completions
-                  : <HabitCompletion>[];
+          child: BlocBuilder<HabitBloc, HabitState>(
+            builder: (context, habitState) {
+              if (habitState is HabitLoading) {
+                return const HomeLoadingState();
+              }
 
-              return BlocBuilder<HabitBloc, HabitState>(
-                builder: (context, state) {
-                  if (state is HabitLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (state is HabitError) {
-                    return Center(child: Text(state.message));
-                  }
-
-                  if (state is HabitLoaded) {
-                    return SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Mis hábitos',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          HabitList(
-                            habits: state.habits,
-                            ownerId: authState.user.id,
-                            completions: completions,
-                          ),
-
-                          const Divider(height: 32),
-
-                          CreateHabitForm(ownerId: authState.user.id),
-                        ],
-                      ),
+              if (habitState is HabitError) {
+                return HomeErrorState(
+                  onRetry: () {
+                    context.read<HabitBloc>().add(
+                      HabitLoadRequested(authState.user.id),
                     );
-                  }
+                  },
+                );
+              }
 
-                  return const SizedBox.shrink();
-                },
-              );
+              if (habitState is HabitLoaded) {
+                return BlocBuilder<HabitCompletionBloc, HabitCompletionState>(
+                  builder: (context, completionState) {
+                    final completionsLoaded =
+                        completionState is TodayHabitCompletionsLoaded;
+                    final completions = completionsLoaded
+                        ? completionState.completions
+                        : <HabitCompletion>[];
+                    final completedCount = habitState.habits
+                        .where(
+                          (habit) => completions.any(
+                            (completion) => completion.habitId == habit.id,
+                          ),
+                        )
+                        .length;
+
+                    return ListView(
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      children: [
+                        Text(
+                          'Hoy',
+                          style: Theme.of(context).textTheme.displaySmall,
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          'Cada día suma.',
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
+                        ),
+                        if (habitState.habits.isNotEmpty) ...[
+                          const SizedBox(height: AppSpacing.lg),
+                          if (completionsLoaded)
+                            HomeProgressSummary(
+                              completedCount: completedCount,
+                              totalCount: habitState.habits.length,
+                            )
+                          else if (completionState is HabitCompletionError)
+                            TextButton.icon(
+                              onPressed: () {
+                                context.read<HabitCompletionBloc>().add(
+                                  TodayHabitCompletionsLoadRequested(
+                                    authState.user.id,
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Reintentar progreso de hoy'),
+                            )
+                          else
+                            const LinearProgressIndicator(minHeight: 2),
+                        ],
+                        const SizedBox(height: AppSpacing.xl),
+                        Text(
+                          'Tus hábitos',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        HabitList(
+                          habits: habitState.habits,
+                          ownerId: authState.user.id,
+                          completions: completions,
+                          completionsLoaded: completionsLoaded,
+                          onCreateHabit: () =>
+                              _openCreateHabit(context, authState.user.id),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              }
+
+              return const SizedBox.shrink();
             },
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _openCreateHabit(BuildContext context, String ownerId) async {
+    final created = await context.push<bool>('/habits/create');
+
+    if (!context.mounted || created != true) {
+      return;
+    }
+
+    context.read<HabitBloc>().add(HabitLoadRequested(ownerId));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('Hábito creado')));
   }
 }

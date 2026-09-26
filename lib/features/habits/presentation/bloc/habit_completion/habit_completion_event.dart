@@ -8,16 +8,16 @@ sealed class HabitCompletionEvent extends Equatable {
 }
 
 class HabitCompletionCreateRequested extends HabitCompletionEvent {
-  final HabitCompletion completion;
-  final String frequency;
+  final Habit habit;
+  final String ownerId;
 
   const HabitCompletionCreateRequested({
-    required this.completion,
-    required this.frequency,
+    required this.habit,
+    required this.ownerId,
   });
 
   @override
-  List<Object> get props => [completion, frequency];
+  List<Object> get props => [habit, ownerId];
 }
 
 class HabitCompletionsLoadRequested extends HabitCompletionEvent {
