@@ -15,6 +15,7 @@ class HabitLevelApp extends StatelessWidget {
     return BlocProvider.value(
       value: authBloc,
       child: MaterialApp.router(
+        debugShowCheckedModeBanner: false,
         title: 'HabitLevel',
         routerConfig: createAppRouter(authBloc),
         theme: AppTheme.light,
